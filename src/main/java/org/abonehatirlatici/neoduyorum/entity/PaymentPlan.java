@@ -27,7 +27,7 @@ public class PaymentPlan {
     private String abonelikAdi;
     private Double odemeMiktari;
     private String odemeBirimi;
-    private LocalDate odemeTarihi;
+    private LocalDate baslangicTarihi;
     private LocalDate bitisTarihi;
     private String frequency;
     private Integer last4Digits;

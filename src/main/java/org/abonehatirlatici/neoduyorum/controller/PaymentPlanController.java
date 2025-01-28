@@ -1,9 +1,9 @@
 package org.abonehatirlatici.neoduyorum.controller;
 
-import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
-import org.abonehatirlatici.neoduyorum.entity.PaymentPlan;
+import org.abonehatirlatici.neoduyorum.entity.StaticSubscription;
 import org.abonehatirlatici.neoduyorum.entity.User;
+import org.abonehatirlatici.neoduyorum.repo.StaticSubscriptionRepo;
 import org.abonehatirlatici.neoduyorum.repo.UserRepository;
 import org.abonehatirlatici.neoduyorum.request.PaymentPlanAddRequest;
 import org.abonehatirlatici.neoduyorum.response.PaymentPlanAddResponse;
@@ -22,10 +22,12 @@ public class PaymentPlanController {
 
     private final PaymentPlanService paymentPlanService;
     private final UserRepository userRepository;
+    private final StaticSubscriptionRepo staticSubscriptionRepo;
 
-    public PaymentPlanController(PaymentPlanService paymentPlanService, UserRepository userRepository) {
+    public PaymentPlanController(PaymentPlanService paymentPlanService, UserRepository userRepository, StaticSubscriptionRepo staticSubscriptionRepo) {
         this.paymentPlanService = paymentPlanService;
         this.userRepository = userRepository;
+        this.staticSubscriptionRepo = staticSubscriptionRepo;
     }
 
     @PostMapping("/add")
@@ -44,4 +46,21 @@ public class PaymentPlanController {
         List<PaymentPlanAddResponse> plans = paymentPlanService.getPlanByUser(userId);
         return ResponseEntity.ok(plans);
     }
+
+    @GetMapping("/static-subscriptions")
+    public ResponseEntity<List<StaticSubscription>> getAllStaticSubscription() {
+        List<StaticSubscription> subscriptions = paymentPlanService.getAllStaticSubscriptions();
+        return ResponseEntity.ok(subscriptions);
+    }
+
+    @PostMapping("/add/{subsId}")
+    public ResponseEntity<PaymentPlanAddResponse> addPaymentPlanFromStaticSubscription(@PathVariable Long subsId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new RuntimeException("Kullanıcı bulunamadı."));
+        PaymentPlanAddResponse response = paymentPlanService.createPaymentPlanFromStatic(subsId,user.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
 }

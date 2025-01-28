@@ -5,9 +5,11 @@ import jakarta.validation.Valid;
 import org.abonehatirlatici.neoduyorum.request.AuthenticationRequest;
 import org.abonehatirlatici.neoduyorum.request.RegistrationRequest;
 import org.abonehatirlatici.neoduyorum.response.AuthenticationResponse;
+import org.abonehatirlatici.neoduyorum.response.UserProfileResponse;
 import org.abonehatirlatici.neoduyorum.service.AuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,6 +27,13 @@ public class AuthenticationController {
     public ResponseEntity<?> register(@RequestBody @Valid RegistrationRequest request) throws MessagingException {
         authenticationService.register(request);
         return ResponseEntity.accepted().build();
+    }
+
+    @GetMapping("/profil")
+    public ResponseEntity<UserProfileResponse> getUserProfile() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserProfileResponse userProfile = authenticationService.getUserByProfile(email);
+        return ResponseEntity.ok(userProfile);
     }
 
     @PostMapping("/authenticate")

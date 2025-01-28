@@ -2,14 +2,17 @@ package org.abonehatirlatici.neoduyorum.service;
 
 import lombok.RequiredArgsConstructor;
 import org.abonehatirlatici.neoduyorum.entity.PaymentPlan;
+import org.abonehatirlatici.neoduyorum.entity.StaticSubscription;
 import org.abonehatirlatici.neoduyorum.entity.User;
 import org.abonehatirlatici.neoduyorum.repo.PaymentRepository;
+import org.abonehatirlatici.neoduyorum.repo.StaticSubscriptionRepo;
 import org.abonehatirlatici.neoduyorum.repo.UserRepository;
 import org.abonehatirlatici.neoduyorum.request.PaymentPlanAddRequest;
 import org.abonehatirlatici.neoduyorum.response.PaymentPlanAddResponse;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,6 +23,31 @@ public class PaymentPlanService {
 
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
+    private final StaticSubscriptionRepo staticSubscriptionRepo;
+
+    public List<StaticSubscription> getAllStaticSubscriptions() {
+        return staticSubscriptionRepo.findAll();
+    }
+
+    public PaymentPlanAddResponse createPaymentPlanFromStatic(Long staticSubscriptionId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new UsernameNotFoundException("Kullanıcı bulunamadı."));
+
+        StaticSubscription staticSubscription = staticSubscriptionRepo.findById(staticSubscriptionId)
+                .orElseThrow(()-> new UsernameNotFoundException("Statik abonelik bulunamadı."));
+
+        var subscription = PaymentPlan.builder()
+                .user(user)
+                .abonelikAdi(staticSubscription.getSAbonelikAdi())
+                .odemeMiktari(staticSubscription.getSOdemeMiktari())
+                .odemeBirimi(staticSubscription.getSOdemeBirimi())
+                .frequency(staticSubscription.getSFrequency())
+                .baslangicTarihi(LocalDate.now())
+                .createdDate(LocalDateTime.now())
+                .build();
+        paymentRepository.save(subscription);
+        return mapToResponse(subscription);
+    }
 
     public PaymentPlanAddResponse createPaymentPlan(PaymentPlanAddRequest request, Long userId) {
         User user = userRepository.findById(userId)
@@ -30,7 +58,7 @@ public class PaymentPlanService {
                 .abonelikAdi(request.getAbonelikAdi())
                 .odemeMiktari(request.getOdemeMiktari())
                 .odemeBirimi(request.getOdemeBirimi())
-                .odemeTarihi(request.getOdemeTarihi())
+                .baslangicTarihi(request.getBaslangicTarihi())
                 .bitisTarihi(request.getBitisTarihi())
                 .frequency(request.getFrequency())
                 .last4Digits(request.getLast4Digits())
@@ -56,7 +84,7 @@ public class PaymentPlanService {
                 .abonelikAdi(subscription.getAbonelikAdi())
                 .odemeMiktari(subscription.getOdemeMiktari())
                 .odemeBirimi(subscription.getOdemeBirimi())
-                .odemeTarihi(subscription.getOdemeTarihi())
+                .baslangicTarihi(subscription.getBaslangicTarihi())
                 .bitisTarihi(subscription.getBitisTarihi())
                 .frequency(subscription.getFrequency())
                 .last4Digits(subscription.getLast4Digits())

@@ -16,6 +16,8 @@ import org.abonehatirlatici.neoduyorum.repo.UserRepository;
 import org.abonehatirlatici.neoduyorum.request.AuthenticationRequest;
 import org.abonehatirlatici.neoduyorum.request.RegistrationRequest;
 import org.abonehatirlatici.neoduyorum.response.AuthenticationResponse;
+import org.abonehatirlatici.neoduyorum.response.PaymentPlanAddResponse;
+import org.abonehatirlatici.neoduyorum.response.UserProfileResponse;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,12 +40,41 @@ public class AuthenticationService {
     private final TokenRepository tokenRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final PaymentRepository paymentRepository;
+
+    public UserProfileResponse getUserByProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new UsernameNotFoundException("Kullanıcı bulunamadı."));
+
+        List<PaymentPlanAddResponse> paymentPlans = paymentRepository.findByUser(user)
+                .stream()
+                .map(paymentPlan -> PaymentPlanAddResponse.builder()
+                        .id(paymentPlan.getId())
+                        .userId(paymentPlan.getUser().getId())
+                        .abonelikAdi(paymentPlan.getAbonelikAdi())
+                        .odemeMiktari(paymentPlan.getOdemeMiktari())
+                        .odemeBirimi(paymentPlan.getOdemeBirimi())
+                        .baslangicTarihi(paymentPlan.getBaslangicTarihi())
+                        .bitisTarihi(paymentPlan.getBitisTarihi())
+                        .frequency(paymentPlan.getFrequency())
+                        .last4Digits(paymentPlan.getLast4Digits())
+                        .cardName(paymentPlan.getCardName())
+                        .build())
+                .toList();
+        return UserProfileResponse.builder()
+                .userId(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .phoneNumber(user.getPhoneNumber())
+                .paymentPlans(paymentPlans)
+                .build();
+    }
 
     public void register(RegistrationRequest request) throws MessagingException {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        var existingUser = userRepository.findByEmail(request.getEmail());
+        if (existingUser.isPresent()) {
             throw new GenelHataKodlariExc(GenelHataKodlari.EMAIL_ALREADY_EXISTS);
         }
-
         var user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
@@ -90,13 +123,11 @@ public class AuthenticationService {
 
     private String generateActivationCode() {
         String characters = "0123456789";
-        StringBuilder codeBuilder = new StringBuilder();
-        SecureRandom secureRandom = new SecureRandom();
-        for (int i = 0; i< 6; i++) {
-            int randomIndex = secureRandom.nextInt(characters.length());
-            codeBuilder.append(characters.charAt(randomIndex));
-        }
-        return codeBuilder.toString();
+        SecureRandom random = new SecureRandom();
+        return random.ints(6,0,characters.length())
+                .mapToObj(characters::charAt)
+                .collect(StringBuilder::new,StringBuilder::append,StringBuilder::append)
+                .toString();
     }
 
     public AuthenticationResponse authenticate(@Valid AuthenticationRequest request) {
