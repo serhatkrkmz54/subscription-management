@@ -8,6 +8,8 @@ import org.abonehatirlatici.neoduyorum.repo.PaymentRepository;
 import org.abonehatirlatici.neoduyorum.repo.StaticSubscriptionRepo;
 import org.abonehatirlatici.neoduyorum.repo.UserRepository;
 import org.abonehatirlatici.neoduyorum.request.PaymentPlanAddRequest;
+import org.abonehatirlatici.neoduyorum.response.SubscriptionDetailResponse;
+import org.abonehatirlatici.neoduyorum.response.SubscriptionGroupResponse;
 import org.abonehatirlatici.neoduyorum.response.PaymentPlanAddResponse;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,8 +28,22 @@ public class PaymentPlanService {
     private final UserRepository userRepository;
     private final StaticSubscriptionRepo staticSubscriptionRepo;
 
-    public List<StaticSubscription> getAllStaticSubscriptions() {
-        return staticSubscriptionRepo.findAll();
+    public List<SubscriptionGroupResponse> getGroupedSubs() {
+        List<StaticSubscription> subscriptions = staticSubscriptionRepo.findAllOrderedByName();
+        Map<String, List<SubscriptionDetailResponse>> groupedSubs = subscriptions.stream()
+                .collect(Collectors.groupingBy(
+                        StaticSubscription::getSAbonelikAdi,
+                        Collectors.mapping(sub -> new SubscriptionDetailResponse(
+                                sub.getId(),
+                                sub.getSFrequency(),
+                                sub.getSKategori(),
+                                sub.getSOdemeBirimi(),
+                                sub.getSOdemeMiktari()
+                        ), Collectors.toList())
+                ));
+        return groupedSubs.entrySet().stream()
+                .map(entry -> new SubscriptionGroupResponse(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
     }
 
     public PaymentPlanAddResponse createPaymentPlanFromStatic(Long staticSubscriptionId, Long userId) {

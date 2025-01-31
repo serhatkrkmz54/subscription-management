@@ -1,11 +1,11 @@
 package org.abonehatirlatici.neoduyorum.controller;
 
 import jakarta.validation.Valid;
-import org.abonehatirlatici.neoduyorum.entity.StaticSubscription;
 import org.abonehatirlatici.neoduyorum.entity.User;
 import org.abonehatirlatici.neoduyorum.repo.StaticSubscriptionRepo;
 import org.abonehatirlatici.neoduyorum.repo.UserRepository;
 import org.abonehatirlatici.neoduyorum.request.PaymentPlanAddRequest;
+import org.abonehatirlatici.neoduyorum.response.SubscriptionGroupResponse;
 import org.abonehatirlatici.neoduyorum.response.PaymentPlanAddResponse;
 import org.abonehatirlatici.neoduyorum.service.PaymentPlanService;
 import org.springframework.http.HttpStatus;
@@ -48,9 +48,8 @@ public class PaymentPlanController {
     }
 
     @GetMapping("/static-subscriptions")
-    public ResponseEntity<List<StaticSubscription>> getAllStaticSubscription() {
-        List<StaticSubscription> subscriptions = paymentPlanService.getAllStaticSubscriptions();
-        return ResponseEntity.ok(subscriptions);
+    public ResponseEntity<List<SubscriptionGroupResponse>> getGroupedSubs() {
+        return ResponseEntity.ok(paymentPlanService.getGroupedSubs());
     }
 
     @PostMapping("/add/{subsId}")
