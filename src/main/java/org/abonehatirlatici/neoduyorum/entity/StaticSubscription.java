@@ -17,6 +17,7 @@ public class StaticSubscription {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private Long id;
 
     private String sAbonelikAdi;

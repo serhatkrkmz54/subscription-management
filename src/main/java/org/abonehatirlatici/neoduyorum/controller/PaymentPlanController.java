@@ -41,6 +41,22 @@ public class PaymentPlanController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPlan);
     }
 
+    @DeleteMapping("/delete/{paymentPlanId}")
+    public ResponseEntity<String> deletePaymentPlan(@PathVariable Long paymentPlanId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new RuntimeException("Kullanıcı bulunamadı."));
+
+        boolean isDeleted = paymentPlanService.abonelikSil(paymentPlanId,user.getId());
+        if (isDeleted) {
+            return ResponseEntity.ok("Ödeme Planı Başarıyla Silindi.");
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Silme İşlemi Sırasında Hata Oluştu.");
+        }
+    }
+
     @GetMapping("/all-plan/{userId}")
     public ResponseEntity<List<PaymentPlanAddResponse>> getPlanByUser(@PathVariable Long userId) {
         List<PaymentPlanAddResponse> plans = paymentPlanService.getPlanByUser(userId);
@@ -53,12 +69,20 @@ public class PaymentPlanController {
     }
 
     @PostMapping("/add/{subsId}")
-    public ResponseEntity<PaymentPlanAddResponse> addPaymentPlanFromStaticSubscription(@PathVariable Long subsId) {
+    public ResponseEntity<PaymentPlanAddResponse> addPaymentPlanFromStaticSubscription(
+            @PathVariable Long subsId,
+            @RequestBody PaymentPlanAddRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()-> new RuntimeException("Kullanıcı bulunamadı."));
-        PaymentPlanAddResponse response = paymentPlanService.createPaymentPlanFromStatic(subsId,user.getId());
+        PaymentPlanAddResponse response = paymentPlanService.createPaymentPlanFromStatic(
+                subsId,
+                user.getId(),
+                request.getLast4Digits(),
+                request.getBitisTarihi(),
+                request.getCardName()
+        );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

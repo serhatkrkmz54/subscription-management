@@ -1,5 +1,6 @@
 package org.abonehatirlatici.neoduyorum.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.abonehatirlatici.neoduyorum.entity.PaymentPlan;
 import org.abonehatirlatici.neoduyorum.entity.StaticSubscription;
@@ -11,6 +12,8 @@ import org.abonehatirlatici.neoduyorum.request.PaymentPlanAddRequest;
 import org.abonehatirlatici.neoduyorum.response.SubscriptionDetailResponse;
 import org.abonehatirlatici.neoduyorum.response.SubscriptionGroupResponse;
 import org.abonehatirlatici.neoduyorum.response.PaymentPlanAddResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +49,7 @@ public class PaymentPlanService {
                 .collect(Collectors.toList());
     }
 
-    public PaymentPlanAddResponse createPaymentPlanFromStatic(Long staticSubscriptionId, Long userId) {
+    public PaymentPlanAddResponse createPaymentPlanFromStatic(Long staticSubscriptionId, Long userId, Integer last4Digits, LocalDate bitisTarihi, String cardName) {
         User user = userRepository.findById(userId)
                 .orElseThrow(()-> new UsernameNotFoundException("Kullanıcı bulunamadı."));
 
@@ -59,6 +62,9 @@ public class PaymentPlanService {
                 .odemeMiktari(staticSubscription.getSOdemeMiktari())
                 .odemeBirimi(staticSubscription.getSOdemeBirimi())
                 .frequency(staticSubscription.getSFrequency())
+                .last4Digits(last4Digits)
+                .cardName(cardName)
+                .bitisTarihi(bitisTarihi)
                 .baslangicTarihi(LocalDate.now())
                 .createdDate(LocalDateTime.now())
                 .build();
@@ -84,6 +90,16 @@ public class PaymentPlanService {
                 .build();
         paymentRepository.save(subscription);
         return mapToResponse(subscription);
+    }
+
+    @Transactional
+    public boolean abonelikSil(Long paymentPlanId, Long userId) {
+        try {
+            paymentRepository.deleteByIdAndUserId(paymentPlanId,userId);
+            return true;
+        }catch (Exception e) {
+            return false;
+        }
     }
 
     public List<PaymentPlanAddResponse> getPlanByUser(Long userId) {
