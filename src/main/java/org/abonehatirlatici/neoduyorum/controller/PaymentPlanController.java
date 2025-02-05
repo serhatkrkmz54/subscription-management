@@ -11,7 +11,9 @@ import org.abonehatirlatici.neoduyorum.service.PaymentPlanService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,6 +41,17 @@ public class PaymentPlanController {
                 .orElseThrow(()-> new RuntimeException("Kullanıcı bulunamadı."));
         PaymentPlanAddResponse createdPlan = paymentPlanService.createPaymentPlan(paymentPlanAddRequest,user.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPlan);
+    }
+
+    @PutMapping("/duzenle/{paymentPlanId}")
+    public ResponseEntity<PaymentPlanAddResponse> updatePaymentPlan(
+            @PathVariable Long paymentPlanId,
+            @RequestBody @Valid PaymentPlanAddRequest request,
+            @AuthenticationPrincipal UserDetails userDetails
+            ) {
+        Long userId = ((User) userDetails).getId();
+        PaymentPlanAddResponse updatedPlan = paymentPlanService.updatePaymentPlan(paymentPlanId,userId,request);
+        return ResponseEntity.ok(updatedPlan);
     }
 
     @DeleteMapping("/delete/{paymentPlanId}")
@@ -85,5 +98,4 @@ public class PaymentPlanController {
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-
 }

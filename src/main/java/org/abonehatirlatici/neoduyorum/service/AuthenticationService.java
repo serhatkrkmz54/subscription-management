@@ -8,6 +8,7 @@ import org.abonehatirlatici.neoduyorum.config.JwtService;
 import org.abonehatirlatici.neoduyorum.entity.Token;
 import org.abonehatirlatici.neoduyorum.entity.User;
 import org.abonehatirlatici.neoduyorum.entity.enums.EmailTemplateName;
+import org.abonehatirlatici.neoduyorum.entity.enums.Gender;
 import org.abonehatirlatici.neoduyorum.exceptions.GenelHataKodlari;
 import org.abonehatirlatici.neoduyorum.exceptions.GenelHataKodlariExc;
 import org.abonehatirlatici.neoduyorum.repo.PaymentRepository;
@@ -15,6 +16,7 @@ import org.abonehatirlatici.neoduyorum.repo.TokenRepository;
 import org.abonehatirlatici.neoduyorum.repo.UserRepository;
 import org.abonehatirlatici.neoduyorum.request.AuthenticationRequest;
 import org.abonehatirlatici.neoduyorum.request.RegistrationRequest;
+import org.abonehatirlatici.neoduyorum.request.UpdateProfileRequest;
 import org.abonehatirlatici.neoduyorum.response.AuthenticationResponse;
 import org.abonehatirlatici.neoduyorum.response.PaymentPlanAddResponse;
 import org.abonehatirlatici.neoduyorum.response.UserProfileResponse;
@@ -65,6 +67,7 @@ public class AuthenticationService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
+                .gender(String.valueOf(user.getGender()))
                 .paymentPlans(paymentPlans)
                 .build();
     }
@@ -85,6 +88,30 @@ public class AuthenticationService {
                 .build();
         userRepository.save(user);
         sendValidationEmail(user);
+    }
+
+    @Transactional
+    public void updateProfile(String email, UpdateProfileRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new RuntimeException("Kullanıcı bulunamadı."));
+
+        user.setFullName(request.getFullName());
+
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
+        }
+
+        if (request.getGender()!=null) {
+            user.setGender(Gender.valueOf(request.getGender()));
+        }
+
+        if (request.getNewPassword()!=null && !request.getNewPassword().isEmpty()) {
+            if (request.getOldPassword()==null || !passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+                throw new RuntimeException("Eski şifre hatalı.");
+            }
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        }
+        userRepository.save(user);
     }
 
     private void sendValidationEmail(User user) throws MessagingException {

@@ -2,13 +2,18 @@ package org.abonehatirlatici.neoduyorum.controller;
 
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
+import org.abonehatirlatici.neoduyorum.entity.User;
+import org.abonehatirlatici.neoduyorum.repo.UserRepository;
 import org.abonehatirlatici.neoduyorum.request.AuthenticationRequest;
+import org.abonehatirlatici.neoduyorum.request.PlayerIdRequest;
 import org.abonehatirlatici.neoduyorum.request.RegistrationRequest;
+import org.abonehatirlatici.neoduyorum.request.UpdateProfileRequest;
 import org.abonehatirlatici.neoduyorum.response.AuthenticationResponse;
 import org.abonehatirlatici.neoduyorum.response.UserProfileResponse;
 import org.abonehatirlatici.neoduyorum.service.AuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +22,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
+    private final UserRepository userRepository;
 
-    public AuthenticationController(AuthenticationService authenticationService) {
+    public AuthenticationController(AuthenticationService authenticationService, UserRepository userRepository) {
         this.authenticationService = authenticationService;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
@@ -29,11 +36,29 @@ public class AuthenticationController {
         return ResponseEntity.accepted().build();
     }
 
+    @PutMapping("/update-profile")
+    public ResponseEntity<String> updateProfile(Authentication authentication,
+                                                @Valid @RequestBody UpdateProfileRequest request) {
+        String email = authentication.getName();
+        authenticationService.updateProfile(email,request);
+        return ResponseEntity.ok("Profil başarıyla güncellendi.");
+    }
+
     @GetMapping("/profil")
     public ResponseEntity<UserProfileResponse> getUserProfile() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         UserProfileResponse userProfile = authenticationService.getUserByProfile(email);
         return ResponseEntity.ok(userProfile);
+    }
+
+    @PostMapping("/updatePlayerId")
+    public ResponseEntity<String> updatePlayerId(@RequestBody PlayerIdRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(()-> new RuntimeException("Kullanıcı Bulunamadı."));
+
+        user.setPlayerId(request.getPlayerId());
+        userRepository.save(user);
+        return ResponseEntity.ok("Player ID güncellendi.");
     }
 
     @PostMapping("/authenticate")

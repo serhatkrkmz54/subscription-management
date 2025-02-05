@@ -39,6 +39,8 @@ public class User implements UserDetails, Principal, Serializable {
     private boolean accountNonLocked;
     private boolean enabled;
 
+    private String playerId;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;

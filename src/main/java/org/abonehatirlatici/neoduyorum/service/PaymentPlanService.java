@@ -12,8 +12,6 @@ import org.abonehatirlatici.neoduyorum.request.PaymentPlanAddRequest;
 import org.abonehatirlatici.neoduyorum.response.SubscriptionDetailResponse;
 import org.abonehatirlatici.neoduyorum.response.SubscriptionGroupResponse;
 import org.abonehatirlatici.neoduyorum.response.PaymentPlanAddResponse;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -93,6 +91,24 @@ public class PaymentPlanService {
     }
 
     @Transactional
+    public PaymentPlanAddResponse updatePaymentPlan(Long paymentPlanId, Long userId, PaymentPlanAddRequest request) {
+        PaymentPlan paymentPlan = paymentRepository.findByIdAndUserId(paymentPlanId, userId)
+                .orElseThrow(()-> new RuntimeException("Abonelik bulunamadı."));
+
+        paymentPlan.setAbonelikAdi(request.getAbonelikAdi());
+        paymentPlan.setOdemeMiktari(request.getOdemeMiktari());
+        paymentPlan.setOdemeBirimi(request.getOdemeBirimi());
+        paymentPlan.setBitisTarihi(request.getBitisTarihi());
+        paymentPlan.setBaslangicTarihi(request.getBaslangicTarihi());
+        paymentPlan.setFrequency(request.getFrequency());
+        paymentPlan.setLast4Digits(request.getLast4Digits());
+        paymentPlan.setCardName(request.getCardName());
+        paymentPlan.setUpdatedDate(LocalDateTime.now());
+        paymentRepository.save(paymentPlan);
+        return mapToResponse(paymentPlan);
+    }
+
+    @Transactional
     public boolean abonelikSil(Long paymentPlanId, Long userId) {
         try {
             paymentRepository.deleteByIdAndUserId(paymentPlanId,userId);
@@ -124,5 +140,4 @@ public class PaymentPlanService {
                 .cardName(subscription.getCardName())
                 .build();
     }
-
 }
