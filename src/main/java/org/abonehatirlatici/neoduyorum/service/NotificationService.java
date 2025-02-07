@@ -24,6 +24,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
     private final NotificationRepository notificationRepository;
+    private final RestTemplate restTemplate;
 
     public void sendNotification(String playerId, String message) {
         String url = "https://onesignal.com/api/v1/notifications";
@@ -40,7 +41,6 @@ public class NotificationService {
                 + "}";
 
         HttpEntity<String> entity = new HttpEntity<>(body, headers);
-        RestTemplate restTemplate = new RestTemplate();
         restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
     }
 
