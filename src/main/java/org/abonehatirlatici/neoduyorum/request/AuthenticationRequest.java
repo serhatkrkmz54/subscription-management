@@ -22,5 +22,6 @@ public class AuthenticationRequest {
     @NotBlank(message = "Parola girmek zorunludur")
     private String password;
 
+    private String playerId;
 
 }

@@ -165,6 +165,10 @@ public class AuthenticationService {
         );
         var claims = new HashMap<String, Object>();
         var user = ((User) auth.getPrincipal());
+        if (!user.getPlayerId().equals(request.getPlayerId())) {
+            user.setPlayerId(request.getPlayerId());
+            userRepository.save(user);
+        }
         claims.put("fullName", user.getFullName());
         var jwtToken = jwtService.generateToken(claims, user);
         return AuthenticationResponse.builder()

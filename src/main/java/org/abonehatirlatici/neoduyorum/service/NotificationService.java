@@ -19,8 +19,8 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private static final String ONESIGNAL_APP_ID = "91f2d0ed-e33f-4ca8-9a7d-8b59a339bbac";
-    private static final String ONESIGNAL_API_KEY = "os_v2_app_shznb3pdh5gkrgt5rnm2gon3vqogk67gmfeerqfnsydmkw43ousue5tibgm5q2zv273pxzbjca5y66vvafdom2owvl5nmwc6lnbouei";
+    private static final String ONESIGNAL_APP_ID = "ee503461-204c-48c7-9cef-6260c5a847dd";
+    private static final String ONESIGNAL_API_KEY = "os_v2_app_5zidiyjajremphhpmjqmlkch3wmnsstriliehanzqw3vttycol6rh3xq3agdpwdcynkwoum7pozalykoa2rjqzq5gsj6g5ovh6kxatq";
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
     private final NotificationRepository notificationRepository;
