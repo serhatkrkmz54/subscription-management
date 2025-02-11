@@ -32,6 +32,8 @@ public class Notification {
 
     private String status;
 
+    private String message;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;

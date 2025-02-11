@@ -51,16 +51,6 @@ public class AuthenticationController {
         return ResponseEntity.ok(userProfile);
     }
 
-    @PostMapping("/updatePlayerId")
-    public ResponseEntity<String> updatePlayerId(@RequestBody PlayerIdRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(()-> new RuntimeException("Kullanıcı Bulunamadı."));
-
-        user.setPlayerId(request.getPlayerId());
-        userRepository.save(user);
-        return ResponseEntity.ok("Player ID güncellendi.");
-    }
-
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request) {
 

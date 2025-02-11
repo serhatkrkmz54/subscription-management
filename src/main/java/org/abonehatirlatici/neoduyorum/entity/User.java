@@ -15,6 +15,7 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -39,7 +40,7 @@ public class User implements UserDetails, Principal, Serializable {
     private boolean accountNonLocked;
     private boolean enabled;
 
-    private String playerId;
+    private String expoPushToken;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -54,6 +55,9 @@ public class User implements UserDetails, Principal, Serializable {
 
     @OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Notification> notifications;
+
+    @OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
+    private Settings settings;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

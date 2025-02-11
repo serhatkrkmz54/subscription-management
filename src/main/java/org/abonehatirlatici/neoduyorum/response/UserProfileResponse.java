@@ -19,5 +19,6 @@ public class UserProfileResponse {
     private String phoneNumber;
     private String gender;
     private List<PaymentPlanAddResponse> paymentPlans;
+    private int settings;
 
 }

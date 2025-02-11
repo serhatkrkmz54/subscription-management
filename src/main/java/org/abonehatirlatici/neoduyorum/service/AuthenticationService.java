@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.abonehatirlatici.neoduyorum.config.JwtService;
+import org.abonehatirlatici.neoduyorum.entity.Settings;
 import org.abonehatirlatici.neoduyorum.entity.Token;
 import org.abonehatirlatici.neoduyorum.entity.User;
 import org.abonehatirlatici.neoduyorum.entity.enums.EmailTemplateName;
@@ -30,6 +31,7 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +44,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final PaymentRepository paymentRepository;
+
 
     public UserProfileResponse getUserByProfile(String email) {
         User user = userRepository.findByEmail(email)
@@ -68,6 +71,9 @@ public class AuthenticationService {
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
                 .gender(String.valueOf(user.getGender()))
+                .settings(Optional.ofNullable(user.getSettings())
+                        .map(Settings::getNotificationDays)
+                        .orElse(5))
                 .paymentPlans(paymentPlans)
                 .build();
     }
@@ -165,8 +171,8 @@ public class AuthenticationService {
         );
         var claims = new HashMap<String, Object>();
         var user = ((User) auth.getPrincipal());
-        if (!user.getPlayerId().equals(request.getPlayerId())) {
-            user.setPlayerId(request.getPlayerId());
+        if (request.getExpoPushToken() != null) {
+            user.setExpoPushToken(request.getExpoPushToken());
             userRepository.save(user);
         }
         claims.put("fullName", user.getFullName());

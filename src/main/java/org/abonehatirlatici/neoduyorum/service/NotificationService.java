@@ -1,61 +1,64 @@
 package org.abonehatirlatici.neoduyorum.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.abonehatirlatici.neoduyorum.entity.Notification;
-import org.abonehatirlatici.neoduyorum.repo.NotificationRepository;
 import org.abonehatirlatici.neoduyorum.entity.PaymentPlan;
+import org.abonehatirlatici.neoduyorum.entity.Settings;
 import org.abonehatirlatici.neoduyorum.entity.User;
+import org.abonehatirlatici.neoduyorum.repo.NotificationRepository;
 import org.abonehatirlatici.neoduyorum.repo.PaymentRepository;
-import org.abonehatirlatici.neoduyorum.repo.UserRepository;
-import org.abonehatirlatici.neoduyorum.request.NotificationRequest;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.abonehatirlatici.neoduyorum.repo.SettingsRepository;
+import org.springframework.cglib.core.Local;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private static final String ONESIGNAL_APP_ID = "ee503461-204c-48c7-9cef-6260c5a847dd";
-    private static final String ONESIGNAL_API_KEY = "os_v2_app_5zidiyjajremphhpmjqmlkch3wmnsstriliehanzqw3vttycol6rh3xq3agdpwdcynkwoum7pozalykoa2rjqzq5gsj6g5ovh6kxatq";
-    private final UserRepository userRepository;
-    private final PaymentRepository paymentRepository;
     private final NotificationRepository notificationRepository;
-    private final RestTemplate restTemplate;
+    private final PaymentRepository paymentRepository;
+    private final ExpoPushNotificationService expoPushNotificationService;
+    private final SettingsRepository settingsRepository;
 
-    public void sendNotification(String playerId, String message) {
-        String url = "https://onesignal.com/api/v1/notifications";
+    @Scheduled(cron = "0 * * * * ?")
+    @Transactional
+    public void checkAndSendNotification() {
+        LocalDate today = LocalDate.now();
+//        LocalDate notificationDate = today.plusDays(5);
+//        List<PaymentPlan> upcomingPayments = paymentRepository.findByBitisTarihiBetween(LocalDate.now(), notificationDate);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization","Basic " + ONESIGNAL_API_KEY);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        List<PaymentPlan> upcomingPayments = paymentRepository.findAll();
 
-        String body = "{"
-                + "\"app_id\": \"" + ONESIGNAL_APP_ID + "\","
-                + "\"include_player_ids\": [\"" + playerId + "\"],"
-                + "\"contents\": {\"en\": \"" + message + "\"},"
-                + "\"headings\": {\"en\": \"Yeni Bildirim\"}"
-                + "}";
+        for (PaymentPlan plan : upcomingPayments) {
+            User user = plan.getUser();
+            long daysLeft = ChronoUnit.DAYS.between(today,plan.getBitisTarihi());
 
-        HttpEntity<String> entity = new HttpEntity<>(body, headers);
-        restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-    }
+            Optional<Settings> settingsOptional = settingsRepository.findByUserId(user.getId());
+            int notificationDays = settingsOptional.map(Settings::getNotificationDays).orElse(5);
 
-    public void createNotification(NotificationRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(()-> new RuntimeException("Kullanıcı Bulunamadı."));
-        PaymentPlan paymentPlan = paymentRepository.findById(request.getPaymentPlanId())
-                .orElseThrow(()-> new RuntimeException("Ödeme planı bulunamadı."));
+            if (daysLeft>0 && daysLeft<=notificationDays && user.getExpoPushToken() != null) {
+                String message = "Abonelik adı " + plan.getAbonelikAdi() +
+                        " olan aboneliğinizin ödeme süresine " + daysLeft + " gün kalmıştır!";
+                expoPushNotificationService.sendPushNotification(user.getExpoPushToken(), "Aboneliğin Ödeme Süresi Doluyor!", message);
 
-        Notification notification = Notification.builder()
-                .user(user)
-                .paymentPlan(paymentPlan)
-                .notificationDate(request.getNotificationDate())
-                .status(request.getStatus())
-                .build();
-        notificationRepository.save(notification);
+                Notification notification = Notification.builder()
+                        .user(user)
+                        .paymentPlan(plan)
+                        .notificationDate(LocalDate.now())
+                        .createdDate(LocalDateTime.now())
+                        .message(message)
+                        .status("SENT")
+                        .build();
+                notificationRepository.save(notification);
+            }
+        }
     }
 }
