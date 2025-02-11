@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.abonehatirlatici.neoduyorum.config.JwtService;
+import org.abonehatirlatici.neoduyorum.entity.PaymentPlan;
 import org.abonehatirlatici.neoduyorum.entity.Settings;
 import org.abonehatirlatici.neoduyorum.entity.Token;
 import org.abonehatirlatici.neoduyorum.entity.User;
@@ -46,9 +47,9 @@ public class AuthenticationService {
     private final PaymentRepository paymentRepository;
 
 
-    public UserProfileResponse getUserByProfile(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(()-> new UsernameNotFoundException("Kullanıcı bulunamadı."));
+    public UserProfileResponse getUserByProfile(User user) {
+        /*User user = userRepository.findByEmail(email)
+                .orElseThrow(()-> new UsernameNotFoundException("Kullanıcı bulunamadı."));*/
 
         List<PaymentPlanAddResponse> paymentPlans = paymentRepository.findByUser(user)
                 .stream()

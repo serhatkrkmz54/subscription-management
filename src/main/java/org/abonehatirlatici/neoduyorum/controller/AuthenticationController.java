@@ -46,8 +46,10 @@ public class AuthenticationController {
 
     @GetMapping("/profil")
     public ResponseEntity<UserProfileResponse> getUserProfile() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserProfileResponse userProfile = authenticationService.getUserByProfile(email);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User)authentication.getPrincipal();
+
+        UserProfileResponse userProfile = authenticationService.getUserByProfile(user);
         return ResponseEntity.ok(userProfile);
     }
 

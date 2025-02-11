@@ -28,7 +28,7 @@ public class NotificationService {
     private final ExpoPushNotificationService expoPushNotificationService;
     private final SettingsRepository settingsRepository;
 
-    @Scheduled(cron = "0 * * * * ?")
+    @Scheduled(cron = "0 0 0 * * ?")
     @Transactional
     public void checkAndSendNotification() {
         LocalDate today = LocalDate.now();
