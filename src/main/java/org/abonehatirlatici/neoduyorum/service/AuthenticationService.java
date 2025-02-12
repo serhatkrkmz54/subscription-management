@@ -5,14 +5,12 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.abonehatirlatici.neoduyorum.config.JwtService;
-import org.abonehatirlatici.neoduyorum.entity.PaymentPlan;
-import org.abonehatirlatici.neoduyorum.entity.Settings;
-import org.abonehatirlatici.neoduyorum.entity.Token;
-import org.abonehatirlatici.neoduyorum.entity.User;
+import org.abonehatirlatici.neoduyorum.entity.*;
 import org.abonehatirlatici.neoduyorum.entity.enums.EmailTemplateName;
 import org.abonehatirlatici.neoduyorum.entity.enums.Gender;
 import org.abonehatirlatici.neoduyorum.exceptions.GenelHataKodlari;
 import org.abonehatirlatici.neoduyorum.exceptions.GenelHataKodlariExc;
+import org.abonehatirlatici.neoduyorum.repo.NotificationRepository;
 import org.abonehatirlatici.neoduyorum.repo.PaymentRepository;
 import org.abonehatirlatici.neoduyorum.repo.TokenRepository;
 import org.abonehatirlatici.neoduyorum.repo.UserRepository;
@@ -29,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +44,8 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final PaymentRepository paymentRepository;
-
+    private final ExpoPushNotificationService expoPushNotificationService;
+    private final NotificationRepository notificationRepository;
 
     public UserProfileResponse getUserByProfile(User user) {
         /*User user = userRepository.findByEmail(email)
@@ -90,12 +90,27 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .gender(request.getGender())
                 .phoneNumber(request.getPhoneNumber())
+                .expoPushToken(request.getExpoPushToken())
                 .accountNonLocked(false)
                 .enabled(false)
                 .build();
         userRepository.save(user);
         sendValidationEmail(user);
+
+        if (user.getExpoPushToken() != null) {
+            String message = "Aktivasyon kodunuz " +user.getEmail()+ " adresine gönderilmiştir. Kayıt işlemini tamamlayın!";
+            expoPushNotificationService.sendPushNotification(user.getExpoPushToken(), "Hesap Aktivasyonu", message);
+            Notification notification = Notification.builder()
+                    .user(user)
+                    .notificationDate(LocalDate.now())
+                    .createdDate(LocalDateTime.now())
+                    .message(message)
+                    .status("SENT")
+                    .build();
+            notificationRepository.save(notification);
+        }
     }
+
 
     @Transactional
     public void updateProfile(String email, UpdateProfileRequest request) {
@@ -130,6 +145,7 @@ public class AuthenticationService {
                 newToken,
                 "Hesap Aktifleştirme"
         );
+
     }
 
     @Transactional

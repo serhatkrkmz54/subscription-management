@@ -29,5 +29,6 @@ public class RegistrationRequest {
     private String password;
     private String fullName;
     private Gender gender;
+    private String expoPushToken;
 
 }

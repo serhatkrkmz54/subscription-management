@@ -25,7 +25,7 @@ public class Notification {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "payment_plan_id",nullable = false)
+    @JoinColumn(name = "payment_plan_id",nullable = true)
     private PaymentPlan paymentPlan;
 
     private LocalDate notificationDate;
