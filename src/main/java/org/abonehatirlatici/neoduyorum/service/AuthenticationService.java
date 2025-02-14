@@ -66,6 +66,7 @@ public class AuthenticationService {
                         .cardName(paymentPlan.getCardName())
                         .build())
                 .toList();
+
         return UserProfileResponse.builder()
                 .userId(user.getId())
                 .email(user.getEmail())

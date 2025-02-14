@@ -3,9 +3,7 @@ package org.abonehatirlatici.neoduyorum.controller;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.abonehatirlatici.neoduyorum.entity.User;
-import org.abonehatirlatici.neoduyorum.repo.UserRepository;
 import org.abonehatirlatici.neoduyorum.request.AuthenticationRequest;
-import org.abonehatirlatici.neoduyorum.request.PlayerIdRequest;
 import org.abonehatirlatici.neoduyorum.request.RegistrationRequest;
 import org.abonehatirlatici.neoduyorum.request.UpdateProfileRequest;
 import org.abonehatirlatici.neoduyorum.response.AuthenticationResponse;
@@ -22,11 +20,9 @@ import org.springframework.web.bind.annotation.*;
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
-    private final UserRepository userRepository;
 
-    public AuthenticationController(AuthenticationService authenticationService, UserRepository userRepository) {
+    public AuthenticationController(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
-        this.userRepository = userRepository;
     }
 
     @PostMapping("/register")
@@ -48,7 +44,6 @@ public class AuthenticationController {
     public ResponseEntity<UserProfileResponse> getUserProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User)authentication.getPrincipal();
-
         UserProfileResponse userProfile = authenticationService.getUserByProfile(user);
         return ResponseEntity.ok(userProfile);
     }
