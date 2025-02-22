@@ -112,7 +112,6 @@ public class AuthenticationService {
         }
     }
 
-
     @Transactional
     public void updateProfile(String email, UpdateProfileRequest request) {
         User user = userRepository.findByEmail(email)
@@ -158,6 +157,18 @@ public class AuthenticationService {
         }
         tokenRepository.deleteByUser(user);
         sendValidationEmail(user);
+        if (user.getExpoPushToken() != null) {
+            String message = "Aktivasyon kodunuz " +user.getEmail()+ " adresinize tekrar gönderilmiştir. Kayıt işleminizi mail adresinize giderek tamamlayın!";
+            expoPushNotificationService.sendPushNotification(user.getExpoPushToken(), "Hesap Aktivasyonu", message);
+            Notification notification = Notification.builder()
+                    .user(user)
+                    .notificationDate(LocalDate.now())
+                    .createdDate(LocalDateTime.now())
+                    .message(message)
+                    .status("SENT")
+                    .build();
+            notificationRepository.save(notification);
+        }
     }
     private String generateAndSaveActivationToken(User user) {
         String generatedToken = generateActivationCode();

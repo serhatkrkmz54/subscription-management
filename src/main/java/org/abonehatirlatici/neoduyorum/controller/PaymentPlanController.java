@@ -24,12 +24,10 @@ public class PaymentPlanController {
 
     private final PaymentPlanService paymentPlanService;
     private final UserRepository userRepository;
-    private final StaticSubscriptionRepo staticSubscriptionRepo;
 
-    public PaymentPlanController(PaymentPlanService paymentPlanService, UserRepository userRepository, StaticSubscriptionRepo staticSubscriptionRepo) {
+    public PaymentPlanController(PaymentPlanService paymentPlanService, UserRepository userRepository) {
         this.paymentPlanService = paymentPlanService;
         this.userRepository = userRepository;
-        this.staticSubscriptionRepo = staticSubscriptionRepo;
     }
 
     @PostMapping("/add")
